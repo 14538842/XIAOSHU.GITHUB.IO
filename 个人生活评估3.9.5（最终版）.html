@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人生活评分系统</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #a8d8ea;
+            --secondary-color: #f7f9fc;
+            --accent-color: #cce0de;
+            --text-color: #52616b;
+            --light-color: #ffffff;
+            --success-color: #a1de93;
+            --warning-color: #ffc89a;
+            --danger-color: #ff9a8d;
+            --diet-color: #a8d8ea;
+            --water-color: #7bcacc;
+            --sleep-color: #f5b971;
+            --exercise-color: #a1de93;
+            --medication-color: #ff9a8d;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            color: var(--text-color);
+            line-height: 1.5;
+            margin: 0;
+            padding: 20px;
+            background-image: linear-gradient(to bottom, #f0f8ff, #e6f7ff);
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.03);
+        }
+        
+        h1 {
+            text-align: center;
+            color: var(--text-color);
+            margin-bottom: 15px;
+            font-weight: 500;
+            font-size: 2rem;
+        }
+        
+        .date-picker {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        
+        .date-input {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            background-color: var(--secondary-color);
+        }
+        
+        .input-section {
+            background-color: var(--secondary-color);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .section-title {
+            font-size: 1.1rem;
+            margin-bottom: 12px;
+            color: var(--text-color);
+            font-weight: 500;
+            padding-bottom: 6px;
+            border-bottom: 1px solid var(--accent-color);
+        }
+        
+        .input-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+        
+        .input-item {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        label {
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+            color: #7a8a94;
+        }
+        
+        input, select {
+            padding: 8px;
+            border: 1px solid #e1e5e9;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            background-color: var(--light-color);
+        }
+        
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 500;
+            display: block;
+            margin: 15px auto;
+            transition: background-color 0.3s;
+        }
+        
+        button:hover {
+            background-color: #93c9dd;
+        }
+        
+        .report-section {
+            display: none;
+            margin-top: 25px;
+        }
+        
+        .report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px dashed #e1e5e9;
+        }
+        
+        .report-title {
+            font-size: 1.4rem;
+            color: var(--text-color);
+            margin: 0;
+        }
+        
+        .report-date {
+            font-size: 0.95rem;
+            color: #7a8a94;
+            font-style: italic;
+        }
+        
+        .score-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        .score-card {
+            background-color: var(--light-color);
+            padding: 12px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+            border: 1px solid #eaeff5;
+        }
+        
+        .score-card h3 {
+            font-size: 0.95rem;
+            margin: 0 0 8px 0;
+            color: var(--text-color);
+        }
+        
+        .score-value {
+            font-size: 1.6rem;
+            font-weight: bold;
+            margin: 5px 0;
+        }
+        
+        .score-status {
+            font-size: 0.85rem;
+            padding: 4px 8px;
+            border-radius: 15px;
+            display: inline-block;
+        }
+        
+        .excellent {
+            background-color: #e7f6e9;
+            color: #2e7d32;
+        }
+        
+        .good {
+            background-color: #fff8e1;
+            color: #f57c00;
+        }
+        
+        .poor {
+            background-color: #ffebee;
+            color: #d32f2f;
+        }
+        
+        .charts-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .chart-box {
+            background-color: white;
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+            border: 1px solid #eaeff5;
+            height: 250px;
+        }
+        
+        .suggestions {
+            background-color: var(--secondary-color);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+        }
+        
+        .final-score {
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            background-color: var(--light-color);
+            border-radius: 10px;
+            border: 1px solid #eaeff5;
+        }
+        
+        .final-score h2 {
+            font-size: 1.1rem;
+            margin: 0 0 10px 0;
+            color: var(--text-color);
+        }
+        
+        .final-score-value {
+            font-size: 2.2rem;
+            font-weight: bold;
+            margin: 5px 0;
+        }
+        
+        .pass {
+            color: #2e7d32;
+        }
+        
+        .fail {
+            color: #d32f2f;
+        }
+        
+        .score-status-text {
+            font-size: 0.9rem;
+            margin: 8px 0 0 0;
+        }
+        
+        .action-plan {
+            background-color: #fff8e1;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+        }
+        
+        .export-btn {
+            background-color: var(--accent-color);
+            color: var(--text-color);
+        }
+        
+        .export-btn:hover {
+            background-color: #b8d0cd;
+        }
+        
+        @media (max-width: 768px) {
+            .charts-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .input-group {
+                grid-template-columns: 1fr;
+            }
+            
+            .report-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+        }
+        
+        .ins-decoration {
+            position: absolute;
+            width: 200px;
+            height: 200px;
+            border: 10px solid var(--primary-color);
+            border-radius: 50%;
+            opacity: 0.1;
+            z-index: -1;
+        }
+        
+        .decoration-1 {
+            top: 50px;
+            right: -100px;
+        }
+        
+        .decoration-2 {
+            bottom: 100px;
+            left: -100px;
+            width: 250px;
+            height: 250px;
+        }
+    </style>
+</head>
+<body>
+    <div class="ins-decoration decoration-1"></div>
+    <div class="ins-decoration decoration-2"></div>
+    
+    <div class="container">
+        <h1>个人生活评分系统</h1>
+        
+        <div class="date-picker">
+            <input type="date" id="date-selector" class="date-input">
+        </div>
+        
+        <div class="input-section">
+            <h2 class="section-title">饮食记录</h2>
+            <div class="input-group">
+                <div class="input-item">
+                    <label for="breakfast">早餐 (kcal)</label>
+                    <input type="number" id="breakfast" min="0" value="0">
+                </div>
+                <div class="input-item">
+                    <label for="lunch">午餐 (kcal)</label>
+                    <input type="number" id="lunch" min="0" value="0">
+                </div>
+                <div class="input-item">
+                    <label for="dinner">晚餐 (kcal)</label>
+                    <input type="number" id="dinner" min="0" value="0">
+                </div>
+            </div>
+            
+            <h2 class="section-title">饮水记录</h2>
+            <div class="input-group">
+                <div class="input-item">
+                    <label for="water">饮水量 (ml)</label>
+                    <input type="number" id="water" min="0" value="0">
+                </div>
+            </div>
+            
+            <h2 class="section-title">睡眠记录</h2>
+            <div class="input-group">
+                <div class="input-item">
+                    <label for="sleep">睡眠时长 (小时，可小数)</label>
+                    <input type="number" id="sleep" min="0" step="0.1" value="0">
+                </div>
+            </div>
+            
+            <h2 class="section-title">运动记录</h2>
+            <div class="input-group">
+                <div class="input-item">
+                    <label for="steps">步数</label>
+                    <input type="number" id="steps" min="0" value="0">
+                </div>
+            </div>
+            
+            <h2 class="section-title">服药记录</h2>
+            <div class="input-group">
+                <div class="input-item">
+                    <label for="calcium">钙片</label>
+                    <select id="calcium">
+                        <option value="0">未服用</option>
+                        <option value="1">已服用</option>
+                    </select>
+                </div>
+                <div class="input-item">
+                    <label for="fish-oil">鱼肝油</label>
+                    <select id="fish-oil">
+                        <option value="0">未服用</option>
+                        <option value="1">已服用</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <button id="generate-btn">生成评分报告</button>
+        
+        <div id="report" class="report-section">
+            <div class="report-header">
+                <h2 class="report-title">生活评分报告</h2>
+                <div class="report-date" id="report-date"></div>
+            </div>
+            
+            <div class="score-cards">
+                <div class="score-card" id="diet-score-card">
+                    <h3>饮食评分</h3>
+                    <div class="score-value" id="diet-score">0</div>
+                    <div class="score-status" id="diet-status">-</div>
+                </div>
+                
+                <div class="score-card" id="water-score-card">
+                    <h3>饮水评分</h3>
+                    <div class="score-value" id="water-score">0</div>
+                    <div class="score-status" id="water-status">-</div>
+                </div>
+                
+                <div class="score-card" id="sleep-score-card">
+                    <h3>睡眠评分</h3>
+                    <div class="score-value" id="sleep-score">0</div>
+                    <div class="score-status" id="sleep-status">-</div>
+                </div>
+                
+                <div class="score-card" id="exercise-score-card">
+                    <h3>运动评分</h3>
+                    <div class="score-value" id="exercise-score">0</div>
+                    <div class="score-status" id="exercise-status">-</div>
+                </div>
+                
+                <div class="score-card" id="medication-score-card">
+                    <h3>服药评分</h3>
+                    <div class="score-value" id="medication-score">0</div>
+                    <div class="score-status" id="medication-status">-</div>
+                </div>
+            </div>
+            
+            <div class="charts-container">
+                <div class="chart-box">
+                    <canvas id="bar-chart"></canvas>
+                </div>
+                <div class="chart-box">
+                    <canvas id="radar-chart"></canvas>
+                </div>
+            </div>
+            
+            <div class="suggestions">
+                <h3>改进建议</h3>
+                <div id="suggestions-content"></div>
+            </div>
+            
+            <div class="final-score">
+                <h2>最终得分</h2>
+                <div class="final-score-value" id="final-score">0</div>
+                <div class="score-status-text" id="pass-fail-status"></div>
+            </div>
+            
+            <div class="action-plan">
+                <h3>明日行动建议</h3>
+                <div id="action-plan-content"></div>
+            </div>
+            
+            <button id="export-btn" class="export-btn">导出PDF报告</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 设置默认日期为今天
+            const today = new Date();
+            const formattedDate = today.toISOString().substr(0, 10);
+            document.getElementById('date-selector').value = formattedDate;
+            
+            // 生成报告按钮事件
+            document.getElementById('generate-btn').addEventListener('click', generateReport);
+            
+            // 导出PDF按钮事件
+            document.getElementById('export-btn').addEventListener('click', exportToPDF);
+        });
+        
+        // 计算各项得分
+        function calculateDietScore() {
+            const breakfast = parseInt(document.getElementById('breakfast').value) || 0;
+            const lunch = parseInt(document.getElementById('lunch').value) || 0;
+            const dinner = parseInt(document.getElementById('dinner').value) || 0;
+            
+            const totalCalories = breakfast + lunch + dinner;
+            let score = 100 - Math.max(0, (totalCalories - 800) / 20);
+            return Math.max(0, Math.min(100, Math.round(score)));
+        }
+        
+        function calculateWaterScore() {
+            const water = parseInt(document.getElementById('water').value) || 0;
+            let score = Math.max(0, (water - 1600) / 15);
+            return Math.max(0, Math.min(100, Math.round(score)));
+        }
+        
+        function calculateSleepScore() {
+            const sleep = parseFloat(document.getElementById('sleep').value) || 0;
+            let score = Math.min(100, Math.max(0, (sleep - 6) * 100));
+            return Math.round(score);
+        }
+        
+        function calculateExerciseScore() {
+            const steps = parseInt(document.getElementById('steps').value) || 0;
+            let score = Math.min(100, Math.max(0, steps / 20));
+            return Math.round(score);
+        }
+        
+        function calculateMedicationScore() {
+            const calcium = parseInt(document.getElementById('calcium').value) || 0;
+            const fishOil = parseInt(document.getElementById('fish-oil').value) || 0;
+            
+            return (calcium * 50) + (fishOil * 50);
+        }
+        
+        // 生成报告
+        function generateReport() {
+            // 计算各项得分
+            const dietScore = calculateDietScore();
+            const waterScore = calculateWaterScore();
+            const sleepScore = calculateSleepScore();
+            const exerciseScore = calculateExerciseScore();
+            const medicationScore = calculateMedicationScore();
+            
+            // 计算最终得分
+            const finalScore = Math.round(
+                (dietScore + waterScore) * 0.3 + 
+                sleepScore * 0.2 + 
+                (exerciseScore + medicationScore) * 0.1
+            );
+            
+            // 更新DOM显示分数
+            document.getElementById('diet-score').textContent = dietScore;
+            document.getElementById('water-score').textContent = waterScore;
+            document.getElementById('sleep-score').textContent = sleepScore;
+            document.getElementById('exercise-score').textContent = exerciseScore;
+            document.getElementById('medication-score').textContent = medicationScore;
+            document.getElementById('final-score').textContent = finalScore;
+            
+            // 显示报告日期
+            const selectedDate = document.getElementById('date-selector').value;
+            const dateObj = new Date(selectedDate);
+            const formattedDate = dateObj.toLocaleDateString('zh-CN', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            document.getElementById('report-date').textContent = `报告日期: ${formattedDate}`;
+            
+            // 设置分数状态
+            setScoreStatus('diet', dietScore);
+            setScoreStatus('water', waterScore);
+            setScoreStatus('sleep', sleepScore);
+            setScoreStatus('exercise', exerciseScore);
+            setScoreStatus('medication', medicationScore);
+            
+            // 设置最终得分状态
+            const passFailElement = document.getElementById('pass-fail-status');
+            if (finalScore >= 65) {
+                document.getElementById('final-score').className = 'final-score-value pass';
+                passFailElement.textContent = '恭喜！今日评分及格';
+                passFailElement.style.color = '#2e7d32';
+            } else {
+                document.getElementById('final-score').className = 'final-score-value fail';
+                passFailElement.textContent = '今日评分不及格';
+                passFailElement.style.color = '#d32f2f';
+            }
+            
+            // 生成图表
+            generateBarChart(dietScore, waterScore, sleepScore, exerciseScore, medicationScore);
+            generateRadarChart(dietScore, waterScore, sleepScore, exerciseScore, medicationScore);
+            
+            // 生成改进建议
+            generateSuggestions(dietScore, waterScore, sleepScore, exerciseScore, medicationScore);
+            
+            // 生成明日行动建议
+            generateActionPlan(dietScore, waterScore, sleepScore, exerciseScore, medicationScore, finalScore);
+            
+            // 显示报告部分
+            document.getElementById('report').style.display = 'block';
+            
+            // 滚动到报告部分
+            document.getElementById('report').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // 设置分数状态（优秀、良好、差）
+        function setScoreStatus(category, score) {
+            const statusElement = document.getElementById(`${category}-status`);
+            statusElement.textContent = getScoreText(score);
+            statusElement.className = 'score-status ' + getScoreClass(score);
+        }
+        
+        function getScoreText(score) {
+            if (score > 80) return '优秀';
+            if (score > 60) return '良好';
+            return '需改进';
+        }
+        
+        function getScoreClass(score) {
+            if (score > 80) return 'excellent';
+            if (score > 60) return 'good';
+            return 'poor';
+        }
+        
+        // 生成柱状图
+        function generateBarChart(dietScore, waterScore, sleepScore, exerciseScore, medicationScore) {
+            const ctx = document.getElementById('bar-chart').getContext('2d');
+            
+            if (window.barChart) {
+                window.barChart.destroy();
+            }
+            
+            window.barChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['饮食', '饮水', '睡眠', '运动', '服药'],
+                    datasets: [{
+                        label: '各项得分',
+                        data: [dietScore, waterScore, sleepScore, exerciseScore, medicationScore],
+                        backgroundColor: [
+                            'rgba(168, 216, 234, 0.7)',
+                            'rgba(123, 202, 204, 0.7)',
+                            'rgba(245, 185, 113, 0.7)',
+                            'rgba(161, 222, 147, 0.7)',
+                            'rgba(255, 154, 141, 0.7)'
+                        ],
+                        borderColor: [
+                            'rgb(168, 216, 234)',
+                            'rgb(123, 202, 204)',
+                            'rgb(245, 185, 113)',
+                            'rgb(161, 222, 147)',
+                            'rgb(255, 154, 141)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                stepSize: 20
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+        
+        // 生成雷达图
+        function generateRadarChart(dietScore, waterScore, sleepScore, exerciseScore, medicationScore) {
+            const ctx = document.getElementById('radar-chart').getContext('2d');
+            
+            if (window.radarChart) {
+                window.radarChart.destroy();
+            }
+            
+            window.radarChart = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ['饮食', '饮水', '睡眠', '运动', '服药'],
+                    datasets: [{
+                        label: '健康维度',
+                        data: [dietScore, waterScore, sleepScore, exerciseScore, medicationScore],
+                        backgroundColor: 'rgba(168, 216, 234, 0.2)',
+                        borderColor: 'rgb(168, 216, 234)',
+                        pointBackgroundColor: [
+                            'rgb(168, 216, 234)',
+                            'rgb(123, 202, 204)',
+                            'rgb(245, 185, 113)',
+                            'rgb(161, 222, 147)',
+                            'rgb(255, 154, 141)'
+                        ],
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgb(168, 216, 234)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                stepSize: 20
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // 生成改进建议
+        function generateSuggestions(dietScore, waterScore, sleepScore, exerciseScore, medicationScore) {
+            const suggestionsElement = document.getElementById('suggestions-content');
+            let suggestionsHTML = '';
+            
+            if (dietScore <= 80) {
+                suggestionsHTML += `<p><strong>饮食建议：</strong>控制总热量摄入，建议选择高蛋白、高纤维食物，减少高糖高脂食物。每餐控制在500-600卡路里以内为宜。</p>`;
+            }
+            
+            if (waterScore <= 80) {
+                suggestionsHTML += `<p><strong>饮水建议：</strong>增加每日饮水量，目标为2000-2500ml。可以设置定时提醒，或者使用有刻度的水杯帮助跟踪。</p>`;
+            }
+            
+            if (sleepScore <= 80) {
+                suggestionsHTML += `<p><strong>睡眠建议：</strong>保证每晚7-8小时高质量睡眠。建立规律的睡眠时间，睡前避免使用电子设备，创造黑暗安静的睡眠环境。</p>`;
+            }
+            
+            if (exerciseScore <= 80) {
+                suggestionsHTML += `<p><strong>运动建议：</strong>增加日常活动量，目标为每日8000-10000步。可以选择步行上班、午休散步等方式增加步数。</p>`;
+            }
+            
+            if (medicationScore < 100) {
+                suggestionsHTML += `<p><strong>服药建议：</strong>按时服用钙片和鱼肝油有助于补充必需营养素，促进骨骼健康和整体代谢。</p>`;
+            }
+            
+            if (suggestionsHTML === '') {
+                suggestionsHTML = '<p>所有维度表现优秀，请继续保持！</p>';
+            }
+            
+            suggestionsElement.innerHTML = suggestionsHTML;
+        }
+        
+        // 生成明日行动建议
+        function generateActionPlan(dietScore, waterScore, sleepScore, exerciseScore, medicationScore, finalScore) {
+            const actionPlanElement = document.getElementById('action-plan-content');
+            let actionHTML = '<ul>';
+            
+            if (finalScore < 65) {
+                actionHTML += `<li>制定明确的饮食计划，控制总热量在1600卡路里以内</li>`;
+                actionHTML += `<li>准备一个1000ml的水壶，确保全天喝完两壶</li>`;
+                actionHTML += `<li>今晚提前30分钟准备睡觉，确保7小时睡眠</li>`;
+                actionHTML += `<li>计划明天进行30分钟的快走或慢跑</li>`;
+                actionHTML += `<li>将钙片和鱼肝油放在显眼位置，提醒自己服用</li>`;
+            } else {
+                actionHTML += `<li>保持当前的饮食结构和热量摄入</li>`;
+                actionHTML += `<li>继续维持良好的饮水习惯</li>`;
+                actionHTML += `<li>保持规律的睡眠时间</li>`;
+                actionHTML += `<li>维持现有的运动量，可适当增加多样性</li>`;
+                actionHTML += `<li>继续按时服用营养补充剂</li>`;
+            }
+            
+            actionHTML += '</ul>';
+            actionPlanElement.innerHTML = actionHTML;
+        }
+        
+        // 导出PDF功能
+        function exportToPDF() {
+            // 隐藏导出按钮
+            document.getElementById('export-btn').style.display = 'none';
+            
+            // 使用html2canvas捕获报告内容
+            html2canvas(document.getElementById('report'), {
+                scale: 2 // 提高清晰度
+            }).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF('p', 'mm', 'a4'); // A4纸张大小
+                
+                const imgWidth = 190; // 留出页边距
+                const pageHeight = 297; // A4高度
+                const imgHeight = canvas.height * imgWidth / canvas.width;
+                
+                let heightLeft = imgHeight;
+                let position = 10; // 上边距
+                
+                // 添加日期标题
+                const selectedDate = document.getElementById('date-selector').value;
+                const dateObj = new Date(selectedDate);
+                const formattedDate = dateObj.toLocaleDateString('zh-CN', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+                
+                pdf.setFontSize(16);
+                pdf.text('个人生活评分报告', 105, 15, { align: 'center' });
+                pdf.setFontSize(12);
+                pdf.text(`报告日期: ${formattedDate}`, 105, 22, { align: 'center' });
+                
+                pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+                heightLeft -= pageHeight;
+                
+                // 添加额外页面（如果需要）
+                while (heightLeft >= 0) {
+                    position = heightLeft - imgHeight;
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+                    heightLeft -= pageHeight;
+                }
+                
+                // 保存PDF
+                const dateStr = dateObj.toISOString().substr(0, 10);
+                pdf.save(`个人生活评分报告_${dateStr}.pdf`);
+                
+                // 重新显示导出按钮
+                document.getElementById('export-btn').style.display = 'block';
+            });
+        }
+    </script>
+</body>
+</html>
